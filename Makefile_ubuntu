@@ -1,0 +1,25 @@
+UBUNTU_ISO := ubuntu-22.04.2-desktop-amd64.iso
+UBUNTU_URL := https://releases.ubuntu.com/22.04.2/${UBUNTU_ISO}
+QEMU_HDA := iot${UBUNTU_ISO}.qcow2
+NPROC := ${shell nproc}
+
+.PHONY: all
+all: ${UBUNTU_ISO} ${QEMU_HDA}
+	qemu-system-x86_64											\
+		-m 12G													\
+		-cpu host												\
+		-net nic												\
+		-vga virtio												\
+		-enable-kvm												\
+		-machine q35											\
+		-smp ${NPROC}											\
+		-hda ${QEMU_HDA}										\
+		-display sdl,gl=on										\
+		-cdrom ${UBUNTU_ISO} 									\
+		-net user,hostfwd=tcp::5000-:22,hostfwd=tcp::8080-:80 &
+
+${UBUNTU_ISO}:
+	curl -L ${UBUNTU_URL} -o $@
+
+${QEMU_HDA}:
+	qemu-img create -f qcow2 $@ 20G
